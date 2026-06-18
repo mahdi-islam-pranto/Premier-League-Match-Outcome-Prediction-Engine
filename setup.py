@@ -19,7 +19,7 @@ def get_requirements(file_path:str) -> List[str]:
 
 # setup function is used to specify the details of the package and its dependencies
 setup(
-name='end-to-end-ml-project',
+name='end-to-end-ml-project-epl-match-prediction',
 version='0.0.1',
 author='Mahdi Islam Pranto',
 author_email='mahdiprantoblog@gmail.com',

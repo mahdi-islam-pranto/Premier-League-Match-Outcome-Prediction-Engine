@@ -1,0 +1,3 @@
+[ 2026-06-18 18:28:34,870 ] 32 root - INFO - Starting data ingestion process.
+[ 2026-06-18 18:28:34,870 ] 35 root - INFO - Reading merged 10-season EPL dataset
+[ 2026-06-18 18:28:34,871 ] 73 root - ERROR - Error reading dataset: [Errno 2] No such file or directory: 'notebook/data/epl_matches_2016_2026.csv'

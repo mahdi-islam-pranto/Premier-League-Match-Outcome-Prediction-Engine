@@ -1,0 +1,5 @@
+[ 2026-06-18 18:36:51,775 ] 31 root - INFO - Starting data ingestion process.
+[ 2026-06-18 18:36:51,776 ] 34 root - INFO - Reading merged 10-season EPL dataset
+[ 2026-06-18 18:36:51,880 ] 45 root - INFO - Raw data saved successfully.
+[ 2026-06-18 18:36:51,880 ] 47 root - INFO - Splitting chronologically by season (no shuffling)
+[ 2026-06-18 18:36:51,920 ] 63 root - INFO - Train: 3040 | Val: 380 | Test: 380 matches
