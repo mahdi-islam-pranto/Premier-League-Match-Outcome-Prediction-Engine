@@ -1,0 +1,10 @@
+pandas
+numpy
+seaborn
+scikit-learn
+dill
+catboost
+xgboost
+fastapi
+uvicorn
+# -e .
