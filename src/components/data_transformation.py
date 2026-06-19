@@ -1,12 +1,7 @@
 """
-src/components/data_transformation.py
---------------------------------------
 Transforms raw EPL match data into a leakage-free, model-ready feature matrix.
 
-WHY THIS FILE IS DIFFERENT FROM YOUR STUDENT-SCORE PROJECT
-------------------------------------------------------------
-In your previous project, DataTransformation just applied scalers/encoders
-to existing columns. Here, we must first ENGINEER features that didn't exist
+Here, we must first ENGINEER features that didn't exist
 in the raw data — because all the raw match stats (shots, fouls, corners, cards)
 are in-match information your model won't have access to before kickoff.
 
@@ -52,10 +47,6 @@ from src.logger import logging
 from src.utils import save_object
 
 
-# ─────────────────────────────────────────────
-# CONFIG
-# ─────────────────────────────────────────────
-
 @dataclass
 class DataTransformationConfig:
     preprocessor_obj_file_path: str = os.path.join('artifacts', 'preprocessor.pkl')
@@ -72,22 +63,15 @@ class DataTransformationConfig:
     ELO_K:     float  = 20.0
 
 
-# ─────────────────────────────────────────────
-# TARGET MAPPING
-# ─────────────────────────────────────────────
+# TARGET MAPPING # Home Win=0, Draw=1, Away Win=2
+RESULT_MAP = {'H': 0, 'D': 1, 'A': 2}   
 
-RESULT_MAP = {'H': 0, 'D': 1, 'A': 2}   # Home Win=0, Draw=1, Away Win=2
-
-
-# ─────────────────────────────────────────────
-# MAIN CLASS
-# ─────────────────────────────────────────────
 
 class DataTransformation:
     def __init__(self):
         self.config = DataTransformationConfig()
 
-    # ── Helper: points earned from a result ───────────────────────────────────
+    # points earned from a result
     def _points(self, result: str, perspective: str) -> int:
         """
         Returns points (3/1/0) for a team given the full_time_result string
@@ -100,7 +84,7 @@ class DataTransformation:
             return 3
         return 0
 
-    # ── Core: engineer all pre-match features ─────────────────────────────────
+    # engineer all pre-match features 
     def _engineer_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Iterates through every match in chronological order.
@@ -113,7 +97,7 @@ class DataTransformation:
 
         W = self.config.FORM_WINDOW
 
-        # ── Per-team running histories ────────────────────────────────────────
+        # Per-team running histories
         elo          = defaultdict(lambda: self.config.ELO_START)
         last_date    = {}                        # team → last match date
         # deques hold dicts of {'pts', 'gf', 'ga', 'venue'}
@@ -125,6 +109,7 @@ class DataTransformation:
 
         rows = []
 
+        
         for _, row in df.iterrows():
             home = row['home_team']
             away = row['away_team']
@@ -133,7 +118,7 @@ class DataTransformation:
             hg   = row['full_time_home_goals']
             ag   = row['full_time_away_goals']
 
-            # ── SNAPSHOT: read features BEFORE updating with this match ───────
+            # SNAPSHOT: read features BEFORE updating with this match
 
             # 1. Elo ratings
             home_elo = elo[home]
@@ -179,7 +164,7 @@ class DataTransformation:
                 'away_team':        away,
                 'season':           row.get('season', None),
 
-                # ── PRE-MATCH FEATURES (model inputs) ──────────────────────
+                # PRE-MATCH FEATURES (model inputs)
                 'home_elo':         round(home_elo, 2),
                 'away_elo':         round(away_elo, 2),
                 'elo_diff':         round(elo_diff, 2),
@@ -203,11 +188,11 @@ class DataTransformation:
                 'home_days_rest':   home_rest,
                 'away_days_rest':   away_rest,
 
-                # ── TARGET ─────────────────────────────────────────────────
+                # TARGET
                 'target':           RESULT_MAP[ftr],
             })
 
-            # ── UPDATE histories AFTER snapshotting ───────────────────────────
+            # UPDATE histories AFTER snapshotting 
 
             # Elo update
             exp_home = 1 / (1 + 10 ** ((away_elo - home_elo) / 400))
@@ -245,7 +230,7 @@ class DataTransformation:
 
         return pd.DataFrame(rows)
 
-    # ── Build sklearn preprocessing pipeline ──────────────────────────────────
+    # Build sklearn preprocessing pipeline 
     def get_preprocessor(self) -> Pipeline:
         """
         Builds a simple numerical pipeline:
@@ -263,7 +248,7 @@ class DataTransformation:
         ])
         return num_pipeline
 
-    # ── Final feature columns ──────────────────────────────────────────────────
+    # Final feature columns 
     @property
     def feature_columns(self):
         return [
@@ -277,7 +262,7 @@ class DataTransformation:
             'home_days_rest', 'away_days_rest',
         ]
 
-    # ── Main entry point ───────────────────────────────────────────────────────
+    # Main entry point for transforming the data
     def initiate_data_transformation(
         self,
         train_path: str,
@@ -294,7 +279,7 @@ class DataTransformation:
           artifacts/train_array.npy
           artifacts/val_array.npy
           artifacts/test_array.npy
-          artifacts/featured_data.csv   ← useful for notebook inspection
+          artifacts/featured_data.csv
 
         Returns:
             (train_array, val_array, test_array, preprocessor_path)
@@ -305,7 +290,7 @@ class DataTransformation:
             val_df   = pd.read_csv(val_path)
             test_df  = pd.read_csv(test_path)
 
-            # ── IMPORTANT: recombine before feature engineering ───────────────
+            # recombine before feature engineering
             # We must compute rolling stats on the full chronological sequence.
             # If we engineered features per-split, the first matches in val/test
             # would have empty look-back windows (their history is in train_df).
@@ -315,7 +300,7 @@ class DataTransformation:
 
             logging.info(f"Full dataset shape before feature engineering: {full_df.shape}")
 
-            # ── Engineer pre-match features ───────────────────────────────────
+            # Engineer pre-match features 
             featured_df = self._engineer_features(full_df)
             logging.info(f"Featured dataset shape: {featured_df.shape}")
 
@@ -324,7 +309,7 @@ class DataTransformation:
             featured_df.to_csv(self.config.featured_data_path, index=False)
             logging.info(f"Saved featured data → {self.config.featured_data_path}")
 
-            # ── Re-split using season boundaries (same logic as DataIngestion) ─
+            # Re-split using season boundaries (same logic as DataIngestion) 
             seasons_sorted = sorted(featured_df['season'].dropna().unique())
             train_seasons  = seasons_sorted[:-2]
             val_season     = seasons_sorted[-2]
@@ -339,7 +324,7 @@ class DataTransformation:
                 f"Val: {len(val_feat)} | Test: {len(test_feat)}"
             )
 
-            # ── Separate features and target ──────────────────────────────────
+            # Separate features and target 
             X_train = train_feat[self.feature_columns]
             y_train = train_feat['target'].values
 
@@ -349,14 +334,14 @@ class DataTransformation:
             X_test  = test_feat[self.feature_columns]
             y_test  = test_feat['target'].values
 
-            # ── Fit preprocessor on train ONLY, transform all three splits ────
+            # Fit preprocessor on train ONLY, transform all three splits
             logging.info("Fitting preprocessor on training data")
             preprocessor = self.get_preprocessor()
             X_train_scaled = preprocessor.fit_transform(X_train)
             X_val_scaled   = preprocessor.transform(X_val)
             X_test_scaled  = preprocessor.transform(X_test)
 
-            # ── Build final arrays (features + target as last column) ─────────
+            # Build final arrays (features + target as last column)
             train_array = np.c_[X_train_scaled, y_train]
             val_array   = np.c_[X_val_scaled,   y_val]
             test_array  = np.c_[X_test_scaled,  y_test]
@@ -387,9 +372,8 @@ class DataTransformation:
             raise CustomException(e, sys)
 
 
-# ─────────────────────────────────────────────
+
 # STANDALONE RUN (triggers full pipeline)
-# ─────────────────────────────────────────────
 
 if __name__ == "__main__":
     from src.components.data_ingestion import DataIngestion
