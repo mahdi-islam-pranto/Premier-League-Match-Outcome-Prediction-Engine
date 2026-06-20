@@ -8,4 +8,5 @@ xgboost
 lightgbm
 fastapi
 uvicorn
+mlflow
 # -e .

@@ -23,6 +23,28 @@ MODELS COMPARED (Phase 1 — default hyperparameters):
 
 PHASE 2 — Hyperparameter tuning on the winner via RandomizedSearchCV
   (GridSearch is too slow; RandomizedSearch gives 90% of the benefit in 10% of the time)
+  
+  
+  MLflow is integrated at every stage so every experiment run is fully
+reproducible and inspectable from the MLflow UI.
+ 
+HOW TO VIEW RESULTS:
+  After running this file, launch the MLflow UI from your project root:
+    $ mlflow ui --port 5001
+  Then open: http://127.0.0.1:5001
+ 
+  You will see one parent run per training session, with nested child
+  runs for each model compared in Phase 1 and the tuned winner in Phase 2.
+ 
+MLFLOW TRACKING STRUCTURE:
+  Experiment : "EPL_Match_Outcome_Prediction"
+  └── Parent run : "EPL_Full_Experiment_<timestamp>"
+        ├── Child run : "Phase1_Logistic_Regression"
+        ├── Child run : "Phase1_Random_Forest"
+        ├── Child run : "Phase1_XGBoost"
+        ├── Child run : "Phase1_LightGBM"
+        ├── Child run : "Phase1_KNN"
+        └── Child run : "Phase2_<BestModel>_Tuned"
 
 ARTIFACTS SAVED:
   artifacts/model.pkl          — best trained model (after tuning)
@@ -35,6 +57,11 @@ import json
 import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
+
+import mlflow
+import mlflow.sklearn
+import mlflow.xgboost
+import mlflow.lightgbm
 
 from dataclasses import dataclass, field
 from typing import Dict, Tuple, Any
@@ -68,6 +95,10 @@ class ModelTrainerConfig:
     n_iter:     int = 40
     cv_folds:   int = 5
     random_state: int = 42
+    
+    # MLflow settings
+    mlflow_tracking_uri: str = "sqlite:///mlflow.db"
+    mlflow_experiment:   str = "EPL_Match_Outcome_Prediction"
 
 
 # TARGET CLASS NAMES (for readable reports)
@@ -81,6 +112,17 @@ CLASSES     = [0, 1, 2]
 class ModelTrainer:
     def __init__(self):
         self.config = ModelTrainerConfig()
+        self._setup_mlflow()
+
+    # MLflow setup 
+    def _setup_mlflow(self):
+        mlflow.set_tracking_uri(self.config.mlflow_tracking_uri)
+        mlflow.set_experiment(self.config.mlflow_experiment)
+        logging.info(
+            f"MLflow tracking URI : {self.config.mlflow_tracking_uri}\n"
+            f"MLflow experiment   : {self.config.mlflow_experiment}\n"
+            f"Run  'mlflow ui --port 5001'  to inspect results."
+        )
 
     # Define candidate models
     def _get_models(self) -> Dict[str, Any]:
@@ -201,6 +243,28 @@ class ModelTrainer:
             f"logloss={metrics['log_loss']}"
         )
         return metrics
+    
+    # Log one model's metrics to MLflow with a split prefix
+    def _mlflow_log_metrics(self, metrics: Dict, prefix: str):
+        mlflow.log_metrics({
+            f"{prefix}_{k}": v
+            for k, v in metrics.items()
+            if not isinstance(v, dict) and v is not None
+        })
+ 
+    # Log the fitted model using the right MLflow flavour
+    def _mlflow_log_model(self, model, name: str):
+        """
+        Uses the native MLflow flavour for XGBoost/LightGBM so that their
+        full metadata (feature importance, tree structure) is captured.
+        Falls back to mlflow.sklearn for everything else.
+        """
+        if isinstance(model, XGBClassifier):
+            mlflow.xgboost.log_model(model, name=name)
+        elif isinstance(model, LGBMClassifier):
+            mlflow.lightgbm.log_model(model, name=name)
+        else:
+            mlflow.sklearn.log_model(model, name=name)
 
     # Pretty-print confusion matrix
     def _log_confusion_matrix(self, model, X: np.ndarray, y: np.ndarray):
@@ -234,25 +298,48 @@ class ModelTrainer:
 
         for name, model in models.items():
             logging.info(f"\n→ Training: {name}")
-            model.fit(X_train, y_train)
+            
+            # One nested MLflow run per model 
+            with mlflow.start_run(run_name=f"Phase1_{name}", nested=True):
+                
+                # Tag what this run represents
+                mlflow.set_tags({
+                    "phase":      "1_comparison",
+                    "model_type": name,
+                    "stage":      "default_params",
+                })
+            
+                model.fit(X_train, y_train)
 
-            train_metrics = self._evaluate(model, X_train, y_train, 'Train')
-            val_metrics   = self._evaluate(model, X_val,   y_val,   'Val  ')
+                train_metrics = self._evaluate(model, X_train, y_train, 'Train')
+                val_metrics   = self._evaluate(model, X_val,   y_val,   'Val  ')
+                
+                # log matrix in mlflow
+                self._mlflow_log_metrics(train_metrics, prefix='train')
+                self._mlflow_log_metrics(val_metrics,   prefix='val')
+ 
+                # Log the fitted model
+                self._mlflow_log_model(model, name=f"model_{name}")
 
             results[name] = {
-                'train': train_metrics,
-                'val':   val_metrics,
-            }
+                    'train': train_metrics,
+                    'val':   val_metrics,
+                }
 
             val_f1 = val_metrics['f1_weighted']
             if val_f1 > best_score:
-                best_score = val_f1
-                best_name  = name
-                best_model = model
+                    best_score = val_f1
+                    best_name  = name
+                    best_model = model
 
         logging.info("\n" + "="*60)
         logging.info(f"Phase 1 winner: {best_name}  (val f1_weighted={best_score:.4f})")
         logging.info("="*60)
+        
+        # Log the winner choice to the parent run
+        mlflow.log_param("phase1_winner", best_name)
+        mlflow.log_metric("phase1_best_val_f1_weighted", best_score)
+        
         return best_name, best_model, results
 
     # Phase 2: tune the winning model
@@ -278,36 +365,54 @@ class ModelTrainer:
         if not param_grid:
             logging.info("No param grid defined for this model — skipping tuning")
             return best_model, {}
+        
+        # start mlflow run
+        with mlflow.start_run(run_name=f"Phase2_{best_name}_Tuned", nested=True):
+ 
+            mlflow.set_tags({
+                "phase":      "2_tuning",
+                "model_type": best_name,
+                "stage":      "randomized_search",
+            })
+            mlflow.log_param("n_iter",    self.config.n_iter)
+            mlflow.log_param("cv_folds",  self.config.cv_folds)
+            mlflow.log_param("scoring",   self.config.scoring_metric)
 
-        cv = StratifiedKFold(
-            n_splits=self.config.cv_folds,
-            shuffle=True,
-            random_state=self.config.random_state,
-        )
+            cv = StratifiedKFold(
+                n_splits=self.config.cv_folds,
+                shuffle=True,
+                random_state=self.config.random_state,
+            )
 
-        search = RandomizedSearchCV(
-            estimator=best_model,
-            param_distributions=param_grid,
-            n_iter=self.config.n_iter,
-            scoring=self.config.scoring_metric,
-            cv=cv,
-            random_state=self.config.random_state,
-            n_jobs=-1,
-            verbose=1,
-            refit=True,
-        )
-        # Tune on train only — val is untouched
-        search.fit(X_train, y_train)
+            search = RandomizedSearchCV(
+                estimator=best_model,
+                param_distributions=param_grid,
+                n_iter=self.config.n_iter,
+                scoring=self.config.scoring_metric,
+                cv=cv,
+                random_state=self.config.random_state,
+                n_jobs=-1,
+                verbose=1,
+                refit=True,
+            )
+            # Tune on train only — val is untouched
+            search.fit(X_train, y_train)
 
-        tuned_model = search.best_estimator_
-        logging.info(f"Best params found:\n  {search.best_params_}")
-        logging.info(f"Best CV {self.config.scoring_metric}: {search.best_score_:.4f}")
+            tuned_model = search.best_estimator_
+            logging.info(f"Best params found:\n  {search.best_params_}")
+            logging.info(f"Best CV {self.config.scoring_metric}: {search.best_score_:.4f}")
 
-        # Evaluate tuned model
-        logging.info("\n--- Tuned model metrics ---")
-        train_metrics = self._evaluate(tuned_model, X_train, y_train, 'Train')
-        val_metrics   = self._evaluate(tuned_model, X_val,   y_val,   'Val  ')
-        self._log_confusion_matrix(tuned_model, X_val, y_val)
+            # Log best params found
+            mlflow.log_params({f"best_{k}": v for k, v in search.best_params_.items()})
+            mlflow.log_metric("cv_best_f1_weighted", round(search.best_score_, 4))
+
+            # Evaluate tuned model
+            logging.info("\n--- Tuned model metrics ---")
+            train_metrics = self._evaluate(tuned_model, X_train, y_train, 'Train')
+            val_metrics   = self._evaluate(tuned_model, X_val,   y_val,   'Val  ')
+            
+            
+            self._log_confusion_matrix(tuned_model, X_val, y_val)
 
         tuning_result = {
             'best_params':  search.best_params_,
@@ -352,50 +457,94 @@ class ModelTrainer:
                 f"Class dist (val)   — "
                 f"H:{(y_val==0).sum()} D:{(y_val==1).sum()} A:{(y_val==2).sum()}"
             )
+            
+            # Wrap everything in a parent MLflow run 
+            import datetime
+            ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+ 
+            with mlflow.start_run(run_name=f"EPL_Full_Experiment_{ts}") as parent_run:
+ 
+                # Parent-level tags and dataset info
+                mlflow.set_tags({
+                    "project":     "EPL Match Outcome Prediction",
+                    "target":      "full_time_result (H=0, D=1, A=2)",
+                    "train_size":  str(X_train.shape[0]),
+                    "val_size":    str(X_val.shape[0]),
+                    "n_features":  str(X_train.shape[1]),
+                })
+                mlflow.log_params({
+                    "train_samples": X_train.shape[0],
+                    "val_samples":   X_val.shape[0],
+                    "n_features":    X_train.shape[1],
+                    "random_state":  self.config.random_state,
+                    "scoring_metric":self.config.scoring_metric,
+                })
 
-            # Phase 1: compare all models 
-            best_name, best_model, phase1_results = self._phase1_compare(
-                X_train, y_train, X_val, y_val
-            )
+                # Phase 1: compare all models 
+                best_name, best_model, phase1_results = self._phase1_compare(
+                    X_train, y_train, X_val, y_val
+                )
 
-            # Phase 2: tune the winner 
-            tuned_model, tuning_result = self._phase2_tune(
-                best_name, best_model, X_train, y_train, X_val, y_val
-            )
+                # Phase 2: tune the winner 
+                tuned_model, tuning_result = self._phase2_tune(
+                    best_name, best_model, X_train, y_train, X_val, y_val
+                )
+                
+                # Final metrics to parent run 
+                final_m = tuning_result.get('val', phase1_results[best_name]['val'])
+                
+                final_metrics = {
+                    "final_val_accuracy": final_m["accuracy"],
+                    "final_val_f1_weighted": final_m["f1_weighted"],
+                    "final_val_log_loss": final_m["log_loss"],
+                }
+                for label, score in final_m["f1_per_class"].items():
+                    final_metrics[f"final_val_f1_{label.replace(' ', '_')}"] = score
 
-            # Final classification report on val
-            y_pred_final = tuned_model.predict(X_val)
-            report_str   = classification_report(
-                y_val, y_pred_final,
-                target_names=[CLASS_NAMES[c] for c in CLASSES],
-                zero_division=0
-            )
-            logging.info(f"\nFull classification report (val):\n{report_str}")
+                mlflow.log_metrics(final_metrics)
+                mlflow.log_param("final_best_model", best_name)
+                
 
-            # Assemble and save JSON report
-            report = {
-                'best_model':    best_name,
-                'phase1_comparison': phase1_results,
-                'phase2_tuning':     tuning_result,
-                'final_val_f1_weighted': tuning_result.get(
-                    'val', {}
-                ).get('f1_weighted', phase1_results[best_name]['val']['f1_weighted']),
-                'classification_report': report_str,
-            }
-            os.makedirs(os.path.dirname(self.config.report_file_path), exist_ok=True)
-            with open(self.config.report_file_path, 'w') as f:
-                json.dump(report, f, indent=2)
-            logging.info(f"Model report saved → {self.config.report_file_path}")
+                # Final classification report on val
+                y_pred_final = tuned_model.predict(X_val)
+                report_str   = classification_report(
+                    y_val, y_pred_final,
+                    target_names=[CLASS_NAMES[c] for c in CLASSES],
+                    zero_division=0
+                )
+                logging.info(f"\nFull classification report (val):\n{report_str}")
+                
 
-            # Save best model
-            save_object(
-                file_path=self.config.model_file_path,
-                obj=tuned_model,
-            )
-            logging.info(f"Model saved → {self.config.model_file_path}")
+                # Assemble and save JSON report
+                report = {
+                    'best_model':    best_name,
+                    'phase1_comparison': phase1_results,
+                    'phase2_tuning':     tuning_result,
+                    'final_val_f1_weighted': tuning_result.get(
+                        'val', {}
+                    ).get('f1_weighted', phase1_results[best_name]['val']['f1_weighted']),
+                    'classification_report': report_str,
+                }
+                os.makedirs(os.path.dirname(self.config.report_file_path), exist_ok=True)
+                with open(self.config.report_file_path, 'w') as f:
+                    json.dump(report, f, indent=2)
+                logging.info(f"Model report saved → {self.config.report_file_path}")
+                
+                # Log report JSON as artifact to the parent run too
+                mlflow.log_artifact(self.config.report_file_path,
+                                    artifact_path="reports")
 
-            final_f1 = report['final_val_f1_weighted']
-            logging.info(f"\n✅ ModelTrainer complete. Best val f1_weighted: {final_f1:.4f}")
+                # Save best model
+                save_object(
+                    file_path=self.config.model_file_path,
+                    obj=tuned_model,
+                )
+                logging.info(f"Model saved → {self.config.model_file_path}")
+                mlflow.log_artifact(self.config.model_file_path,
+                                    artifact_path="final_model")
+
+                final_f1 = report['final_val_f1_weighted']
+                logging.info(f"\n✅ ModelTrainer complete. Best val f1_weighted: {final_f1:.4f}")
             return final_f1, self.config.model_file_path
 
         except Exception as e:
@@ -429,8 +578,3 @@ if __name__ == "__main__":
     print(f"\n✅ Training complete")
     print(f"   Best val f1_weighted : {best_f1:.4f}")
     print(f"   Model saved at       : {model_path}")
-    print(f"\nNext step: evaluate on TEST set (only touch it once, at the very end):")
-    print(f"   from src.utils import load_object")
-    print(f"   model = load_object('{model_path}')")
-    print(f"   X_test, y_test = test_arr[:, :-1], test_arr[:, -1].astype(int)")
-    print(f"   print(model.score(X_test, y_test))")

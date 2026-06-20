@@ -8,7 +8,7 @@
 [ 2026-06-20 01:07:33,094 ] 96 root - INFO - Engineering pre-match features (Elo, form, H2H, rest days)
 [ 2026-06-20 01:07:33,848 ] 305 root - INFO - Featured dataset shape: (3800, 23)
 [ 2026-06-20 01:07:33,901 ] 310 root - INFO - Saved featured data \u2192 artifacts\featured_data.csv
-[ 2026-06-20 01:07:33,910 ] 322 root - INFO - Re-split sizes — Train: 3040 | Val: 380 | Test: 380
+[ 2026-06-20 01:07:33,910 ] 322 root - INFO - Re-split sizes ï¿½ Train: 3040 | Val: 380 | Test: 380
 [ 2026-06-20 01:07:33,914 ] 338 root - INFO - Fitting preprocessor on training data
 [ 2026-06-20 01:07:33,993 ] 350 root - INFO - Saving preprocessor and numpy arrays
 [ 2026-06-20 01:07:33,998 ] 359 root - INFO - Preprocessor saved \u2192 artifacts\preprocessor.pkl
@@ -16,11 +16,11 @@
 [ 2026-06-20 01:07:33,998 ] 361 root - INFO - val_array shape:   (380, 19)
 [ 2026-06-20 01:07:33,999 ] 362 root - INFO - test_array shape:  (380, 19)
 [ 2026-06-20 01:07:34,001 ] 346 root - INFO - X_train: (3040, 18) | X_val: (380, 18)
-[ 2026-06-20 01:07:34,001 ] 347 root - INFO - Class dist (train) — H:1379 D:686 A:975
-[ 2026-06-20 01:07:34,001 ] 351 root - INFO - Class dist (val)   — H:155 D:93 A:132
+[ 2026-06-20 01:07:34,001 ] 347 root - INFO - Class dist (train) ï¿½ H:1379 D:686 A:975
+[ 2026-06-20 01:07:34,001 ] 351 root - INFO - Class dist (val)   ï¿½ H:155 D:93 A:132
 [ 2026-06-20 01:07:34,001 ] 231 root - INFO - 
 ============================================================
-[ 2026-06-20 01:07:34,001 ] 232 root - INFO - PHASE 1 — Default-parameter comparison
+[ 2026-06-20 01:07:34,001 ] 232 root - INFO - PHASE 1 ï¿½ Default-parameter comparison
 [ 2026-06-20 01:07:34,002 ] 233 root - INFO - ============================================================
 [ 2026-06-20 01:07:34,002 ] 236 root - INFO - 
 \u2192 Training: Logistic Regression
@@ -48,7 +48,7 @@
 [ 2026-06-20 01:07:41,868 ] 255 root - INFO - ============================================================
 [ 2026-06-20 01:07:41,888 ] 273 root - INFO - 
 ============================================================
-[ 2026-06-20 01:07:41,888 ] 274 root - INFO - PHASE 2 — Hyperparameter tuning: Logistic Regression
+[ 2026-06-20 01:07:41,888 ] 274 root - INFO - PHASE 2 ï¿½ Hyperparameter tuning: Logistic Regression
 [ 2026-06-20 01:07:41,889 ] 275 root - INFO - ============================================================
 [ 2026-06-20 01:07:50,979 ] 303 root - INFO - Best params found:
   {'solver': 'saga', 'penalty': 'l2', 'C': 1.0}

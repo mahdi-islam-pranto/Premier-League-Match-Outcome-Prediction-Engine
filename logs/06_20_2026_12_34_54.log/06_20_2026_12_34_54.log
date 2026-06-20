@@ -1,0 +1,31 @@
+[ 2026-06-20 12:34:54,334 ] 31 root - INFO - Starting data ingestion process.
+[ 2026-06-20 12:34:54,335 ] 34 root - INFO - Reading merged 10-season EPL dataset
+[ 2026-06-20 12:34:54,473 ] 45 root - INFO - Raw data saved successfully.
+[ 2026-06-20 12:34:54,473 ] 47 root - INFO - Splitting chronologically by season (no shuffling)
+[ 2026-06-20 12:34:54,516 ] 63 root - INFO - Train: 3040 | Val: 380 | Test: 380 matches
+[ 2026-06-20 12:34:54,516 ] 288 root - INFO - Reading train / val / test splits from DataIngestion
+[ 2026-06-20 12:34:54,593 ] 301 root - INFO - Full dataset shape before feature engineering: (3800, 23)
+[ 2026-06-20 12:34:54,593 ] 96 root - INFO - Engineering pre-match features (Elo, form, H2H, rest days)
+[ 2026-06-20 12:34:55,395 ] 305 root - INFO - Featured dataset shape: (3800, 23)
+[ 2026-06-20 12:34:55,442 ] 310 root - INFO - Saved featured data \u2192 artifacts\featured_data.csv
+[ 2026-06-20 12:34:55,449 ] 322 root - INFO - Re-split sizes — Train: 3040 | Val: 380 | Test: 380
+[ 2026-06-20 12:34:55,452 ] 338 root - INFO - Fitting preprocessor on training data
+[ 2026-06-20 12:34:55,518 ] 350 root - INFO - Saving preprocessor and numpy arrays
+[ 2026-06-20 12:34:55,523 ] 359 root - INFO - Preprocessor saved \u2192 artifacts\preprocessor.pkl
+[ 2026-06-20 12:34:55,523 ] 360 root - INFO - train_array shape: (3040, 19)
+[ 2026-06-20 12:34:55,524 ] 361 root - INFO - val_array shape:   (380, 19)
+[ 2026-06-20 12:34:55,524 ] 362 root - INFO - test_array shape:  (380, 19)
+[ 2026-06-20 12:34:57,020 ] 121 root - INFO - MLflow tracking URI : sqlite:///mlflow.db
+MLflow experiment   : EPL_Match_Outcome_Prediction
+Run  'mlflow ui --port 5001'  to inspect results.
+[ 2026-06-20 12:34:57,022 ] 451 root - INFO - X_train: (3040, 18) | X_val: (380, 18)
+[ 2026-06-20 12:34:57,023 ] 452 root - INFO - Class dist (train) — H:1379 D:686 A:975
+[ 2026-06-20 12:34:57,023 ] 456 root - INFO - Class dist (val)   — H:155 D:93 A:132
+[ 2026-06-20 12:34:57,573 ] 295 root - INFO - 
+============================================================
+[ 2026-06-20 12:34:57,573 ] 296 root - INFO - PHASE 1 — Default-parameter comparison
+[ 2026-06-20 12:34:57,573 ] 297 root - INFO - ============================================================
+[ 2026-06-20 12:34:57,573 ] 300 root - INFO - 
+\u2192 Training: Logistic Regression
+[ 2026-06-20 12:34:57,685 ] 240 root - INFO -   [Train] acc=0.5135 | f1_w=0.5194 | logloss=0.9924
+[ 2026-06-20 12:34:57,701 ] 240 root - INFO -   [Val  ] acc=0.4974 | f1_w=0.4894 | logloss=1.0118

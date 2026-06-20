@@ -1,0 +1,145 @@
+{
+  "best_model": "Logistic Regression",
+  "phase1_comparison": {
+    "Logistic Regression": {
+      "train": {
+        "accuracy": 0.5135,
+        "f1_weighted": 0.5194,
+        "f1_per_class": {
+          "Home Win": 0.6143,
+          "Draw": 0.2947,
+          "Away Win": 0.5433
+        },
+        "log_loss": 0.9924
+      },
+      "val": {
+        "accuracy": 0.4974,
+        "f1_weighted": 0.4894,
+        "f1_per_class": {
+          "Home Win": 0.612,
+          "Draw": 0.2262,
+          "Away Win": 0.5309
+        },
+        "log_loss": 1.0118
+      }
+    },
+    "Random Forest": {
+      "train": {
+        "accuracy": 0.9977,
+        "f1_weighted": 0.9977,
+        "f1_per_class": {
+          "Home Win": 0.9985,
+          "Draw": 0.9978,
+          "Away Win": 0.9964
+        },
+        "log_loss": 0.2575
+      },
+      "val": {
+        "accuracy": 0.5079,
+        "f1_weighted": 0.4826,
+        "f1_per_class": {
+          "Home Win": 0.6106,
+          "Draw": 0.2014,
+          "Away Win": 0.5303
+        },
+        "log_loss": 1.0197
+      }
+    },
+    "XGBoost": {
+      "train": {
+        "accuracy": 0.6773,
+        "f1_weighted": 0.6474,
+        "f1_per_class": {
+          "Home Win": 0.7529,
+          "Draw": 0.3903,
+          "Away Win": 0.6791
+        },
+        "log_loss": 0.7423
+      },
+      "val": {
+        "accuracy": 0.5184,
+        "f1_weighted": 0.4506,
+        "f1_per_class": {
+          "Home Win": 0.6284,
+          "Draw": 0.0404,
+          "Away Win": 0.5308
+        },
+        "log_loss": 1.0241
+      }
+    },
+    "LightGBM": {
+      "train": {
+        "accuracy": 0.9612,
+        "f1_weighted": 0.9612,
+        "f1_per_class": {
+          "Home Win": 0.9604,
+          "Draw": 0.9688,
+          "Away Win": 0.9567
+        },
+        "log_loss": 0.4187
+      },
+      "val": {
+        "accuracy": 0.4658,
+        "f1_weighted": 0.4559,
+        "f1_per_class": {
+          "Home Win": 0.5656,
+          "Draw": 0.1905,
+          "Away Win": 0.5141
+        },
+        "log_loss": 1.0918
+      }
+    },
+    "KNN": {
+      "train": {
+        "accuracy": 0.998,
+        "f1_weighted": 0.998,
+        "f1_per_class": {
+          "Home Win": 0.9989,
+          "Draw": 0.9978,
+          "Away Win": 0.9969
+        },
+        "log_loss": 0.0036
+      },
+      "val": {
+        "accuracy": 0.4868,
+        "f1_weighted": 0.4522,
+        "f1_per_class": {
+          "Home Win": 0.5831,
+          "Draw": 0.1951,
+          "Away Win": 0.4797
+        },
+        "log_loss": 1.3035
+      }
+    }
+  },
+  "phase2_tuning": {
+    "best_params": {
+      "solver": "saga",
+      "penalty": "l2",
+      "C": 1.0
+    },
+    "cv_f1": 0.5073,
+    "train": {
+      "accuracy": 0.5128,
+      "f1_weighted": 0.5187,
+      "f1_per_class": {
+        "Home Win": 0.6129,
+        "Draw": 0.2945,
+        "Away Win": 0.5433
+      },
+      "log_loss": 0.9924
+    },
+    "val": {
+      "accuracy": 0.4974,
+      "f1_weighted": 0.4894,
+      "f1_per_class": {
+        "Home Win": 0.612,
+        "Draw": 0.2262,
+        "Away Win": 0.5309
+      },
+      "log_loss": 1.0118
+    }
+  },
+  "final_val_f1_weighted": 0.4894,
+  "classification_report": "              precision    recall  f1-score   support\n\n    Home Win       0.60      0.63      0.61       155\n        Draw       0.25      0.20      0.23        93\n    Away Win       0.51      0.55      0.53       132\n\n    accuracy                           0.50       380\n   macro avg       0.45      0.46      0.46       380\nweighted avg       0.48      0.50      0.49       380\n"
+}

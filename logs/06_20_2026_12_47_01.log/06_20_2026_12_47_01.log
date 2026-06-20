@@ -1,0 +1,67 @@
+[ 2026-06-20 12:47:01,811 ] 31 root - INFO - Starting data ingestion process.
+[ 2026-06-20 12:47:01,811 ] 34 root - INFO - Reading merged 10-season EPL dataset
+[ 2026-06-20 12:47:01,946 ] 45 root - INFO - Raw data saved successfully.
+[ 2026-06-20 12:47:01,946 ] 47 root - INFO - Splitting chronologically by season (no shuffling)
+[ 2026-06-20 12:47:01,995 ] 63 root - INFO - Train: 3040 | Val: 380 | Test: 380 matches
+[ 2026-06-20 12:47:01,996 ] 288 root - INFO - Reading train / val / test splits from DataIngestion
+[ 2026-06-20 12:47:02,118 ] 301 root - INFO - Full dataset shape before feature engineering: (3800, 23)
+[ 2026-06-20 12:47:02,118 ] 96 root - INFO - Engineering pre-match features (Elo, form, H2H, rest days)
+[ 2026-06-20 12:47:03,252 ] 305 root - INFO - Featured dataset shape: (3800, 23)
+[ 2026-06-20 12:47:03,323 ] 310 root - INFO - Saved featured data \u2192 artifacts\featured_data.csv
+[ 2026-06-20 12:47:03,332 ] 322 root - INFO - Re-split sizes — Train: 3040 | Val: 380 | Test: 380
+[ 2026-06-20 12:47:03,337 ] 338 root - INFO - Fitting preprocessor on training data
+[ 2026-06-20 12:47:03,417 ] 350 root - INFO - Saving preprocessor and numpy arrays
+[ 2026-06-20 12:47:03,422 ] 359 root - INFO - Preprocessor saved \u2192 artifacts\preprocessor.pkl
+[ 2026-06-20 12:47:03,423 ] 360 root - INFO - train_array shape: (3040, 19)
+[ 2026-06-20 12:47:03,423 ] 361 root - INFO - val_array shape:   (380, 19)
+[ 2026-06-20 12:47:03,423 ] 362 root - INFO - test_array shape:  (380, 19)
+[ 2026-06-20 12:47:05,106 ] 121 root - INFO - MLflow tracking URI : sqlite:///mlflow.db
+MLflow experiment   : EPL_Match_Outcome_Prediction
+Run  'mlflow ui --port 5001'  to inspect results.
+[ 2026-06-20 12:47:05,106 ] 451 root - INFO - X_train: (3040, 18) | X_val: (380, 18)
+[ 2026-06-20 12:47:05,106 ] 452 root - INFO - Class dist (train) — H:1379 D:686 A:975
+[ 2026-06-20 12:47:05,106 ] 456 root - INFO - Class dist (val)   — H:155 D:93 A:132
+[ 2026-06-20 12:47:05,641 ] 295 root - INFO - 
+============================================================
+[ 2026-06-20 12:47:05,641 ] 296 root - INFO - PHASE 1 — Default-parameter comparison
+[ 2026-06-20 12:47:05,641 ] 297 root - INFO - ============================================================
+[ 2026-06-20 12:47:05,641 ] 300 root - INFO - 
+\u2192 Training: Logistic Regression
+[ 2026-06-20 12:47:05,746 ] 240 root - INFO -   [Train] acc=0.5135 | f1_w=0.5194 | logloss=0.9924
+[ 2026-06-20 12:47:05,760 ] 240 root - INFO -   [Val  ] acc=0.4974 | f1_w=0.4894 | logloss=1.0118
+[ 2026-06-20 12:47:34,056 ] 300 root - INFO - 
+\u2192 Training: Random Forest
+[ 2026-06-20 12:47:35,745 ] 240 root - INFO -   [Train] acc=0.9977 | f1_w=0.9977 | logloss=0.2575
+[ 2026-06-20 12:47:36,148 ] 240 root - INFO -   [Val  ] acc=0.5079 | f1_w=0.4826 | logloss=1.0197
+[ 2026-06-20 12:47:50,628 ] 300 root - INFO - 
+\u2192 Training: XGBoost
+[ 2026-06-20 12:47:51,710 ] 240 root - INFO -   [Train] acc=0.6773 | f1_w=0.6474 | logloss=0.7423
+[ 2026-06-20 12:47:51,745 ] 240 root - INFO -   [Val  ] acc=0.5184 | f1_w=0.4506 | logloss=1.0241
+[ 2026-06-20 12:48:01,205 ] 300 root - INFO - 
+\u2192 Training: LightGBM
+[ 2026-06-20 12:48:03,373 ] 240 root - INFO -   [Train] acc=0.9612 | f1_w=0.9612 | logloss=0.4187
+[ 2026-06-20 12:48:03,434 ] 240 root - INFO -   [Val  ] acc=0.4658 | f1_w=0.4559 | logloss=1.0918
+[ 2026-06-20 12:48:20,035 ] 300 root - INFO - 
+\u2192 Training: KNN
+[ 2026-06-20 12:48:24,118 ] 240 root - INFO -   [Train] acc=0.9980 | f1_w=0.9980 | logloss=0.0036
+[ 2026-06-20 12:48:24,163 ] 240 root - INFO -   [Val  ] acc=0.4868 | f1_w=0.4522 | logloss=1.3035
+[ 2026-06-20 12:48:42,240 ] 335 root - INFO - 
+============================================================
+[ 2026-06-20 12:48:42,240 ] 336 root - INFO - Phase 1 winner: Logistic Regression  (val f1_weighted=0.4894)
+[ 2026-06-20 12:48:42,240 ] 337 root - INFO - ============================================================
+[ 2026-06-20 12:48:42,277 ] 360 root - INFO - 
+============================================================
+[ 2026-06-20 12:48:42,277 ] 361 root - INFO - PHASE 2 — Hyperparameter tuning: Logistic Regression
+[ 2026-06-20 12:48:42,278 ] 362 root - INFO - ============================================================
+[ 2026-06-20 12:48:54,658 ] 402 root - INFO - Best params found:
+  {'solver': 'saga', 'penalty': 'l2', 'C': 1.0}
+[ 2026-06-20 12:48:54,658 ] 403 root - INFO - Best CV f1_weighted: 0.5073
+[ 2026-06-20 12:48:54,683 ] 410 root - INFO - 
+--- Tuned model metrics ---
+[ 2026-06-20 12:48:54,700 ] 240 root - INFO -   [Train] acc=0.5128 | f1_w=0.5187 | logloss=0.9924
+[ 2026-06-20 12:48:54,715 ] 240 root - INFO -   [Val  ] acc=0.4974 | f1_w=0.4894 | logloss=1.0118
+[ 2026-06-20 12:48:54,718 ] 274 root - INFO - Confusion Matrix (rows=Actual, cols=Predicted):
+[ 2026-06-20 12:48:54,718 ] 275 root - INFO -              |   Pred H |   Pred D |   Pred A
+[ 2026-06-20 12:48:54,718 ] 277 root - INFO -   Act Home Win |       97 |       24 |       34
+[ 2026-06-20 12:48:54,719 ] 277 root - INFO -   Act Draw     |       38 |       19 |       36
+[ 2026-06-20 12:48:54,719 ] 277 root - INFO -   Act Away Win |       27 |       32 |       73

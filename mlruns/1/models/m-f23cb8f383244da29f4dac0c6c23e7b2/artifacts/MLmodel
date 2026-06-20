@@ -1,0 +1,23 @@
+artifact_path: file:D:/projects/python/Premier League Match Prediction/mlruns/1/models/m-f23cb8f383244da29f4dac0c6c23e7b2/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.13.1
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.9.0
+    skops_trusted_types: null
+mlflow_version: 3.14.0
+model_id: m-f23cb8f383244da29f4dac0c6c23e7b2
+model_size_bytes: 9545
+model_uuid: m-f23cb8f383244da29f4dac0c6c23e7b2
+prompts: null
+run_id: d49ed2b9eb9d48ddbce705bd554ba8cb
+utc_time_created: '2026-06-20 06:54:30.350204'

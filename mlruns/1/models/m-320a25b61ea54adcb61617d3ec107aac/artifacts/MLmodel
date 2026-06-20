@@ -1,0 +1,27 @@
+artifact_path: file:D:/projects/python/Premier League Match Prediction/mlruns/1/models/m-320a25b61ea54adcb61617d3ec107aac/artifacts
+flavors:
+  lightgbm:
+    code: null
+    data: model.skops
+    lgb_version: 4.6.0
+    model_class: lightgbm.sklearn.LGBMClassifier
+    serialization_format: skops
+    skops_trusted_types:
+    - collections.OrderedDict
+    - lightgbm.basic.Booster
+    - lightgbm.sklearn.LGBMClassifier
+    - lightgbm.sklearn.LGBMRegressor
+  python_function:
+    data: model.skops
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.lightgbm
+    python_version: 3.13.1
+mlflow_version: 3.14.0
+model_id: m-320a25b61ea54adcb61617d3ec107aac
+model_size_bytes: 2132089
+model_uuid: m-320a25b61ea54adcb61617d3ec107aac
+prompts: null
+run_id: a13543daec0d43b19fd1bba43f5fda9d
+utc_time_created: '2026-06-20 06:48:03.578368'
