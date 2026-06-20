@@ -33,6 +33,7 @@ TARGET:
 
 import os
 import sys
+import json
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
@@ -54,6 +55,7 @@ class DataTransformationConfig:
     val_arr_path: str               = os.path.join('artifacts', 'val_array.npy')
     test_arr_path: str              = os.path.join('artifacts', 'test_array.npy')
     featured_data_path: str         = os.path.join('artifacts', 'featured_data.csv')
+    team_states_path: str = os.path.join('artifacts', 'team_states.json')
 
     # Rolling window for form features
     FORM_WINDOW: int = 5
@@ -229,6 +231,68 @@ class DataTransformation:
             last_date[away] = date
 
         return pd.DataFrame(rows)
+    
+    
+    def _save_team_states(self, df: pd.DataFrame):
+        # Replays the match history one final time to capture each team's
+        # current Elo, last 5 matches, and last match date — the exact inputs
+        # predict_pipeline.py needs to build features for an unseen future match.
+        # Saves to: artifacts/team_states.json
+        
+        W = self.config.FORM_WINDOW
+        elo          = defaultdict(lambda: self.config.ELO_START)
+        last_date    = {}
+        team_history = defaultdict(lambda: deque(maxlen=50))
+        h2h_history  = defaultdict(lambda: deque(maxlen=W))
+ 
+        for _, row in df.iterrows():
+            home = row['home_team']
+            away = row['away_team']
+            ftr  = row['full_time_result']
+            hg   = row['full_time_home_goals']
+            ag   = row['full_time_away_goals']
+            date = row['match_date']
+ 
+            # Elo update
+            he, ae = elo[home], elo[away]
+            exp_h  = 1 / (1 + 10 ** ((ae - he) / 400))
+            sh     = 1.0 if ftr == 'H' else (0.5 if ftr == 'D' else 0.0)
+            elo[home] = he + self.config.ELO_K * (sh - exp_h)
+            elo[away] = ae + self.config.ELO_K * ((1 - sh) - (1 - exp_h))
+ 
+            team_history[home].append({'pts': self._points(ftr,'home'), 'gf': hg, 'ga': ag, 'venue': 'home'})
+            team_history[away].append({'pts': self._points(ftr,'away'), 'gf': ag, 'ga': hg, 'venue': 'away'})
+ 
+            pair_key = f"{min(home,away)}|||{max(home,away)}"
+            result_token = (f'{home}_win' if ftr == 'H' else
+                            f'{away}_win' if ftr == 'A' else 'draw')
+            h2h_history[pair_key].append(result_token)
+ 
+            last_date[home] = str(date.date())
+            last_date[away] = str(date.date())
+ 
+        states = {
+            'teams': {
+                team: {
+                    'elo':        round(elo[team], 4),
+                    'last_date':  last_date.get(team, None),
+                    'recent':     list(team_history[team]),
+                    'recent_home':[m for m in team_history[team] if m['venue'] == 'home'],
+                    'recent_away':[m for m in team_history[team] if m['venue'] == 'away'],
+                }
+                for team in sorted(elo.keys())
+            },
+            'h2h': {k: list(v) for k, v in h2h_history.items()},
+            'generated_at': str(df['match_date'].max().date()),
+            'form_window':  W,
+        }
+ 
+        os.makedirs(os.path.dirname(self.config.team_states_path), exist_ok=True)
+        with open(self.config.team_states_path, 'w') as f:
+            json.dump(states, f, indent=2)
+        logging.info(f"Team states saved → {self.config.team_states_path}  ({len(states['teams'])} teams)")
+
+
 
     # Build sklearn preprocessing pipeline 
     def get_preprocessor(self) -> Pipeline:
@@ -360,6 +424,9 @@ class DataTransformation:
             logging.info(f"train_array shape: {train_array.shape}")
             logging.info(f"val_array shape:   {val_array.shape}")
             logging.info(f"test_array shape:  {test_array.shape}")
+            
+            # save recent team states/form to json
+            self._save_team_states(full_df)
 
             return (
                 train_array,

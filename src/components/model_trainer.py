@@ -5,7 +5,7 @@ Trains multiple classifiers on the pre-match EPL feature matrix,
 selects the best by validation F1 (weighted), tunes hyperparameters,
 and produces a full evaluation report.
 
-WHY NOT JUST ACCURACY?
+Used WEIGHTED F1 matric instead of ACCURACY.
 -----------------------
 Accuracy is misleading for this problem. The class distribution is roughly:
   Home Win  ~43%  | Draw ~27%  | Away Win ~30%
@@ -36,15 +36,6 @@ HOW TO VIEW RESULTS:
   You will see one parent run per training session, with nested child
   runs for each model compared in Phase 1 and the tuned winner in Phase 2.
  
-MLFLOW TRACKING STRUCTURE:
-  Experiment : "EPL_Match_Outcome_Prediction"
-  └── Parent run : "EPL_Full_Experiment_<timestamp>"
-        ├── Child run : "Phase1_Logistic_Regression"
-        ├── Child run : "Phase1_Random_Forest"
-        ├── Child run : "Phase1_XGBoost"
-        ├── Child run : "Phase1_LightGBM"
-        ├── Child run : "Phase1_KNN"
-        └── Child run : "Phase2_<BestModel>_Tuned"
 
 ARTIFACTS SAVED:
   artifacts/model.pkl          — best trained model (after tuning)

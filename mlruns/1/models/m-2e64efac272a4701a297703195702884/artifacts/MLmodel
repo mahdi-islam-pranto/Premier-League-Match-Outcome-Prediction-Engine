@@ -1,0 +1,22 @@
+artifact_path: file:D:/projects/python/Premier League Match Prediction/mlruns/1/models/m-2e64efac272a4701a297703195702884/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.13.1
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.3.0
+mlflow_version: 3.14.0
+model_id: m-2e64efac272a4701a297703195702884
+model_size_bytes: 950909
+model_uuid: m-2e64efac272a4701a297703195702884
+prompts: null
+run_id: 332773c6ce374a2cb32cb4a8f41a512f
+utc_time_created: '2026-06-20 18:59:27.248096'
