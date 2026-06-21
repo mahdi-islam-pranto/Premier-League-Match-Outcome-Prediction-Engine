@@ -9,4 +9,5 @@ lightgbm
 fastapi
 uvicorn
 mlflow
+streamlit
 # -e .

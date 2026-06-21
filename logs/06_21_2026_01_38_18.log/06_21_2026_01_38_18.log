@@ -1,0 +1,5 @@
+[ 2026-06-21 01:40:06,299 ] 109 root - INFO - Artifacts loaded — 34 teams | states generated: 2026-05-24
+[ 2026-06-21 01:42:25,062 ] 240 root - INFO - Tottenham vs Chelsea \u2192 Away Win (confidence 40.0%)
+[ 2026-06-21 01:43:02,464 ] 240 root - INFO - Arsenal vs Chelsea \u2192 Home Win (confidence 58.2%)
+[ 2026-06-21 01:43:02,467 ] 240 root - INFO - Liverpool vs Man City \u2192 Away Win (confidence 50.0%)
+[ 2026-06-21 01:43:02,471 ] 240 root - INFO - Man United vs Tottenham \u2192 Home Win (confidence 50.0%)
