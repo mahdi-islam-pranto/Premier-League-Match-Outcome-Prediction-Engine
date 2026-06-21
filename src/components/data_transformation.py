@@ -1,14 +1,6 @@
 """
 Transforms raw EPL match data into a leakage-free, model-ready feature matrix.
 
-Here, we must first ENGINEER features that didn't exist
-in the raw data — because all the raw match stats (shots, fouls, corners, cards)
-are in-match information your model won't have access to before kickoff.
-
-The engineered features are all computed using ONLY matches that happened BEFORE
-the current match for each team. This is called "point-in-time correctness"
-and is what separates a real ML project from a leaky one.
-
 FEATURES ENGINEERED (all pre-match, zero leakage):
   - Elo rating (home & away)      : rolling team strength estimate
   - Elo difference                : single strongest pre-match signal

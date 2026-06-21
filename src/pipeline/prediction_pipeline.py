@@ -1,33 +1,7 @@
 """
-src/pipeline/predict_pipeline.py
-----------------------------------
 Given a home team, away team, and match date, builds the same 18
 pre-match features that DataTransformation produced during training,
 scales them with the saved preprocessor, and returns a prediction.
-
-HOW IT WORKS
-------------
-At inference time we don't re-run the full feature-engineering loop.
-Instead, DataTransformation saved a snapshot of every team's state
-(Elo, last-5-match form, home/away splits, H2H records) at the end
-of the training dataset into artifacts/team_states.json.
-
-predict_pipeline.py loads that snapshot and uses it to build the
-feature vector for the requested match — exactly the same 18 features
-the model was trained on, in exactly the same order.
-
-ARTIFACTS REQUIRED (all produced by the training pipeline):
-  artifacts/model.pkl          — the tuned best classifier
-  artifacts/preprocessor.pkl   — fitted StandardScaler pipeline
-  artifacts/team_states.json   — team Elo + form snapshots
-
-UNKNOWN TEAMS
--------------
-If a team is not in team_states.json (newly promoted club), we fall back to:
-  Elo     → 1500 (league average)
-  Form    → all zeros (no history)
-  H2H     → all zeros (no history)
-  Rest    → 14 days (typical mid-season gap)
 """
 
 import os

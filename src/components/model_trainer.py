@@ -1,18 +1,7 @@
 """
-src/components/model_trainer.py
----------------------------------
 Trains multiple classifiers on the pre-match EPL feature matrix,
 selects the best by validation F1 (weighted), tunes hyperparameters,
 and produces a full evaluation report.
-
-Used WEIGHTED F1 matric instead of ACCURACY.
------------------------
-Accuracy is misleading for this problem. The class distribution is roughly:
-  Home Win  ~43%  | Draw ~27%  | Away Win ~30%
-A naive model that always predicts "Home Win" gets 43% accuracy for free.
-We use WEIGHTED F1 as the primary selection metric so that the Draw class
-(the hardest and most minority) is not silently ignored. Per-class F1 is
-also reported so you can see exactly how well the model handles each outcome.
 
 MODELS COMPARED (Phase 1 — default hyperparameters):
   1. Logistic Regression     — linear baseline, interpretable, fast
@@ -24,22 +13,10 @@ MODELS COMPARED (Phase 1 — default hyperparameters):
 PHASE 2 — Hyperparameter tuning on the winner via RandomizedSearchCV
   (GridSearch is too slow; RandomizedSearch gives 90% of the benefit in 10% of the time)
   
-  
-  MLflow is integrated at every stage so every experiment run is fully
-reproducible and inspectable from the MLflow UI.
- 
-HOW TO VIEW RESULTS:
-  After running this file, launch the MLflow UI from your project root:
-    $ mlflow ui --port 5001
-  Then open: http://127.0.0.1:5001
- 
-  You will see one parent run per training session, with nested child
-  runs for each model compared in Phase 1 and the tuned winner in Phase 2.
- 
 
 ARTIFACTS SAVED:
-  artifacts/model.pkl          — best trained model (after tuning)
-  artifacts/model_report.json  — full metrics for all models (for README / logging)
+  artifacts/model.pkl
+  artifacts/model_report.json
 """
 
 import os

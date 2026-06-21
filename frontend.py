@@ -761,4 +761,4 @@ elif "Power Rankings" in page:
         """, unsafe_allow_html=True)
 
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.markdown(f'<div style="color:#8b949e;font-size:0.75rem">Elo range: {min_elo:.0f} – {max_elo:.0f} · Baseline: 1500 · {len(ranked)} teams ranked</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="color:#8b949e;font-size:0.75rem">Elo range: {min_elo:.0f} - {max_elo:.0f} · Baseline: 1500 · {len(ranked)} teams ranked</div>', unsafe_allow_html=True)
