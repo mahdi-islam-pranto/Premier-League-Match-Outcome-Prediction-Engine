@@ -18,7 +18,7 @@ from datetime import date, timedelta
 API_BASE = "http://127.0.0.1:8000"
 
 st.set_page_config(
-    page_title = "EPL Predictor",
+    page_title = "KickoffIQ — EPL Match Outcome Predictor",
     page_icon  = "⚽",
     layout     = "wide",
     initial_sidebar_state = "expanded",
@@ -457,9 +457,8 @@ def result_badge(code: str, label: str) -> str:
 
 # SIDEBAR
 
-
 with st.sidebar:
-    st.markdown("## ⚽ EPL Predictor")
+    st.markdown("## ⚽ KickoffIQ — EPL Match Outcome Predictor")
     st.markdown('<div style="color:#8b949e;font-size:0.82rem;margin-bottom:1.2rem">Premier League match outcome prediction using machine learning</div>', unsafe_allow_html=True)
 
     page = st.radio(

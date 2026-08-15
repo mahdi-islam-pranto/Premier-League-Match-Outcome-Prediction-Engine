@@ -10,14 +10,16 @@ if str(project_root) not in sys.path:
 from src.logger import logging
 from src.exception import CustomException
 
-# class for data ingestion configuration, where we will specify the path to store the train, test and raw data
+
+# class for data ingestion configuration, where we will specify the path to store the train, validation, test and raw data
 @dataclass
 class DataIngestionConfig:
     raw_data_path: str = os.path.join('artifacts', 'raw.csv')
     train_data_path: str = os.path.join('artifacts', 'train.csv')
     val_data_path: str = os.path.join('artifacts', 'val.csv')
     test_data_path: str = os.path.join('artifacts', 'test.csv')
-    
+
+# class for data ingestion, which will read the raw dataset, split it into train, validation and test sets and save them to the artifacts folder
 class DataIngestion:
     def __init__(self):
         self.ingestion_config = DataIngestionConfig()
@@ -73,7 +75,7 @@ class DataIngestion:
             logging.error(f"Error reading dataset: {e}")
             raise CustomException(e, sys)
         
-        
+         
 if __name__ == "__main__":
     obj = DataIngestion()
     obj.initiate_data_ingestion()

@@ -25,5 +25,4 @@ author='Mahdi Islam Pranto',
 author_email='mahdiprantoblog@gmail.com',
 packages=find_packages(),
 install_requires=get_requirements('requirements.txt')  # ['numpy','pandas','matplotlib',...']
-
 )
