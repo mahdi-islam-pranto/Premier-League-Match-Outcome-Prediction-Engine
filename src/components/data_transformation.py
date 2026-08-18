@@ -65,7 +65,7 @@ class DataTransformation:
     def __init__(self):
         self.config = DataTransformationConfig()
 
-    # points earned from a result
+    # points earned from a result, from the perspective of a given team (home/away)
     def _points(self, result: str, perspective: str) -> int:
         """
         Returns points (3/1/0) for a team given the full_time_result string
@@ -92,18 +92,20 @@ class DataTransformation:
         W = self.config.FORM_WINDOW
 
         # Per-team running histories
+        # Elo ratings (float)
         elo          = defaultdict(lambda: self.config.ELO_START)
         last_date    = {}                        # team → last match date
         # deques hold dicts of {'pts', 'gf', 'ga', 'venue'}
         team_history = defaultdict(lambda: deque(maxlen=50))
-
-        # ── Per-pair H2H history ──────────────────────────────────────────────
+   
+        # Per-pair H2H history
         # key = frozenset({team_a, team_b}) → deque of 'H_team_won' or 'A_team_won' or 'D'
         h2h_history  = defaultdict(lambda: deque(maxlen=W))
 
+        # Build feature rows (one per match)
         rows = []
 
-        
+        # Iterate through matches in chronological order
         for _, row in df.iterrows():
             home = row['home_team']
             away = row['away_team']
@@ -151,6 +153,7 @@ class DataTransformation:
             home_rest = (date - last_date[home]).days if home in last_date else 30
             away_rest = (date - last_date[away]).days if away in last_date else 30
 
+            # Build the feature row
             rows.append({
                 # identifiers (will be dropped before training)
                 'match_date':       date,
@@ -188,7 +191,7 @@ class DataTransformation:
 
             # UPDATE histories AFTER snapshotting 
 
-            # Elo update
+            # Elo update (home and away ratings are updated after the match)
             exp_home = 1 / (1 + 10 ** ((away_elo - home_elo) / 400))
             exp_away = 1 - exp_home
             score_home = 1.0 if ftr == 'H' else (0.5 if ftr == 'D' else 0.0)
@@ -222,8 +225,11 @@ class DataTransformation:
             last_date[home] = date
             last_date[away] = date
 
+        logging.info(f"Feature engineering complete: new data: {len(rows)} rows built")
+
         return pd.DataFrame(rows)
     
+
     
     def _save_team_states(self, df: pd.DataFrame):
         # Replays the match history one final time to capture each team's
@@ -371,6 +377,7 @@ class DataTransformation:
             val_season     = seasons_sorted[-2]
             test_season    = seasons_sorted[-1]
 
+            # Re-split the featured data into train/val/test
             train_feat = featured_df[featured_df['season'].isin(train_seasons)]
             val_feat   = featured_df[featured_df['season'] == val_season]
             test_feat  = featured_df[featured_df['season'] == test_season]
