@@ -1,28 +1,4 @@
-"""
-Transforms raw EPL match data into a leakage-free, model-ready feature matrix.
-
-FEATURES ENGINEERED (all pre-match, zero leakage):
-  - Elo rating (home & away)      : rolling team strength estimate
-  - Elo difference                : single strongest pre-match signal
-  - Rolling form pts (last 5)     : recent form (any venue)
-  - Rolling goals scored/conceded : attacking/defensive form (last 5)
-  - Home-specific form            : last 5 home games for home team
-  - Away-specific form            : last 5 away games for away team
-  - Head-to-head record           : last 5 meetings between these two teams
-  - Days rest                     : fatigue/recovery proxy
-
-COLUMNS DROPPED (in-match / post-match / leaky):
-  - half_time_* (known only at HT)
-  - home/away team shots, shots on target, fouls, corners, cards
-  - full_time_home_goals, full_time_away_goals  (derived from target)
-  - home_points, away_points                    (direct encoding of target)
-  - match_referee                               (weak signal, hard at inference)
-  - match_date, season                          (used for feature eng then dropped)
-
-TARGET:
-  full_time_result: H → 0, D → 1, A → 2
-"""
-
+"Transforms raw EPL match data into a leakage-free, model-ready feature matrix"
 import os
 import sys
 import json

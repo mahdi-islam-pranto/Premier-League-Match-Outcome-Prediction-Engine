@@ -194,6 +194,7 @@ class ModelTrainer:
         y_pred = model.predict(X)
         y_prob = model.predict_proba(X) if hasattr(model, 'predict_proba') else None
 
+        # Compute metrics
         metrics = {
             'accuracy':    round(accuracy_score(y, y_pred), 4),
             'f1_weighted': round(f1_score(y, y_pred, average='weighted', zero_division=0), 4),
@@ -205,6 +206,7 @@ class ModelTrainer:
             },
             'log_loss': round(log_loss(y, y_prob), 4) if y_prob is not None else None,
         }
+
         logging.info(
             f"  [{split_name}] acc={metrics['accuracy']:.4f} | "
             f"f1_w={metrics['f1_weighted']:.4f} | "
@@ -294,6 +296,7 @@ class ModelTrainer:
                     'val':   val_metrics,
                 }
 
+            # get the weighted F1 score for this model on the validation set
             val_f1 = val_metrics['f1_weighted']
             if val_f1 > best_score:
                     best_score = val_f1
@@ -329,6 +332,7 @@ class ModelTrainer:
         logging.info(f"PHASE 2 — Hyperparameter tuning: {best_name}")
         logging.info("="*60)
 
+        # Get the param grid (dict) for this model type
         param_grid = self._get_param_grids().get(best_name, {})
         if not param_grid:
             logging.info("No param grid defined for this model — skipping tuning")
@@ -346,12 +350,14 @@ class ModelTrainer:
             mlflow.log_param("cv_folds",  self.config.cv_folds)
             mlflow.log_param("scoring",   self.config.scoring_metric)
 
+            # Use StratifiedKFold to preserve class proportions in each fold
             cv = StratifiedKFold(
                 n_splits=self.config.cv_folds,
                 shuffle=True,
                 random_state=self.config.random_state,
             )
 
+            # RandomizedSearchCV to tune hyperparameters
             search = RandomizedSearchCV(
                 estimator=best_model,
                 param_distributions=param_grid,
@@ -363,10 +369,13 @@ class ModelTrainer:
                 verbose=1,
                 refit=True,
             )
+
             # Tune on train only — val is untouched
             search.fit(X_train, y_train)
 
+            # Get the best estimator and its metrics
             tuned_model = search.best_estimator_
+
             logging.info(f"Best params found:\n  {search.best_params_}")
             logging.info(f"Best CV {self.config.scoring_metric}: {search.best_score_:.4f}")
 
@@ -379,8 +388,12 @@ class ModelTrainer:
             train_metrics = self._evaluate(tuned_model, X_train, y_train, 'Train')
             val_metrics   = self._evaluate(tuned_model, X_val,   y_val,   'Val  ')
             
-            
+            # Log metrics to MLflow
             self._log_confusion_matrix(tuned_model, X_val, y_val)
+
+            # put metrics into logging.info() for visibility in console
+            # logging.info(f"Train F1 (weighted): {train_metrics['f1_weighted']:.4f}")
+            # logging.info(f"Val F1 (weighted):   {val_metrics['f1_weighted']:.4f}")
 
         tuning_result = {
             'best_params':  search.best_params_,
@@ -466,6 +479,7 @@ class ModelTrainer:
                     "final_val_f1_weighted": final_m["f1_weighted"],
                     "final_val_log_loss": final_m["log_loss"],
                 }
+                # Add per-class F1 scores to final metrics
                 for label, score in final_m["f1_per_class"].items():
                     final_metrics[f"final_val_f1_{label.replace(' ', '_')}"] = score
 
@@ -493,6 +507,8 @@ class ModelTrainer:
                     ).get('f1_weighted', phase1_results[best_name]['val']['f1_weighted']),
                     'classification_report': report_str,
                 }
+
+                # Save report JSON to artifacts
                 os.makedirs(os.path.dirname(self.config.report_file_path), exist_ok=True)
                 with open(self.config.report_file_path, 'w') as f:
                     json.dump(report, f, indent=2)
@@ -507,10 +523,12 @@ class ModelTrainer:
                     file_path=self.config.model_file_path,
                     obj=tuned_model,
                 )
+
                 logging.info(f"Model saved → {self.config.model_file_path}")
                 mlflow.log_artifact(self.config.model_file_path,
                                     artifact_path="final_model")
 
+                
                 final_f1 = report['final_val_f1_weighted']
                 logging.info(f"\n✅ ModelTrainer complete. Best val f1_weighted: {final_f1:.4f}")
             return final_f1, self.config.model_file_path
