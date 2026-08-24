@@ -17,9 +17,7 @@ from src.logger    import logging
 from src.utils     import load_object
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 # CONFIG
-# ─────────────────────────────────────────────────────────────────────────────
 
 @dataclass
 class PredictPipelineConfig:
@@ -49,8 +47,6 @@ FEATURE_COLUMNS = [
 
 
 # MAIN PIPELINE CLASS
-
-
 class PredictPipeline:
     def __init__(self):
         self.config        = PredictPipelineConfig()
@@ -58,7 +54,7 @@ class PredictPipeline:
         self._preprocessor = None
         self._team_states  = None
 
-    # Lazy-load all artifacts on first call 
+    # Lazy-load all artifacts on first call (model, preprocessor, team_states.json)
     def _load_artifacts(self):
         if self._model is not None:
             return
@@ -104,7 +100,7 @@ class PredictPipeline:
             }
         return state
 
-    # Days since last match 
+    # Days since last match (or default if unknown)
     def _days_rest(self, last_date_str: Optional[str], match_date: date) -> int:
         if not last_date_str:
             return self.config.default_rest_days
@@ -180,17 +176,25 @@ class PredictPipeline:
         }
         """
         try:
+            # load artifacts (model, preprocessor, team_states.json) if not already loaded
             self._load_artifacts()
 
             match_dt = datetime.strptime(match_date, '%Y-%m-%d').date()
+            # Build all 18 features
             features = self._build_features(home_team, away_team, match_dt)
-
+            # Scale features using the preprocessor
             X_raw    = np.array([[features[col] for col in FEATURE_COLUMNS]])
             X_scaled = self._preprocessor.transform(X_raw)
 
+            logging.info(
+                f"Predicting {home_team} vs {away_team} on {match_date} "
+                f"with features: {features}")
+            
+            # make prediction and get probabilities
             pred_class = int(self._model.predict(X_scaled)[0])
             proba      = self._model.predict_proba(X_scaled)[0]
 
+            # Build the result dict to return
             result = {
                 'home_team':        home_team,
                 'away_team':        away_team,
@@ -227,7 +231,7 @@ class PredictPipeline:
         return sorted(self._team_states.get('teams', {}).keys())
     
     
-# test the pipeline
+# test the pipeline if run as a script
 if __name__ == "__main__":
     tottenham_arsenal = PredictPipeline().predict(
         home_team="Arsenal",

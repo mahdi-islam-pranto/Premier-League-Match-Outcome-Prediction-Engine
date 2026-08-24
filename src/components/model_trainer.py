@@ -1,23 +1,4 @@
-"""
-Trains multiple classifiers on the pre-match EPL feature matrix,
-selects the best by validation F1 (weighted), tunes hyperparameters,
-and produces a full evaluation report.
-
-MODELS COMPARED (Phase 1 — default hyperparameters):
-  1. Logistic Regression     — linear baseline, interpretable, fast
-  2. Random Forest           — robust ensemble, handles non-linearities
-  3. XGBoost                 — usually best on tabular sports data
-  4. LightGBM                — faster XGBoost alternative, good on small data
-  5. K-Nearest Neighbours    — distance-based, uses the scaled Elo/form features
-
-PHASE 2 — Hyperparameter tuning on the winner via RandomizedSearchCV
-  (GridSearch is too slow; RandomizedSearch gives 90% of the benefit in 10% of the time)
-  
-
-ARTIFACTS SAVED:
-  artifacts/model.pkl
-  artifacts/model_report.json
-"""
+""" Trains multiple classifiers on the pre-match EPL feature matrix, selects the best by validation F1 (weighted), tunes hyperparameters, and produces a full evaluation report. """
 
 import os
 import sys
