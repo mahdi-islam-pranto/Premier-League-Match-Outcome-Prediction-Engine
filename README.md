@@ -1,4 +1,4 @@
-﻿# **KickOffIQ** Premier League Match Outcome Prediction Engine
+﻿# **KickOffIQ:** Premier League Match Outcome Prediction Engine
 
 **Live Demo:** [http://138.252.115.100:8003/](http://138.252.115.100:8003/)
 
